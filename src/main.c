@@ -20,7 +20,7 @@ static void cd(char **args){
     }
 }
 
-static int execute(char **args){
+static bool execute(char **args){
 
     pid_t pid, wpid;
     int status;
