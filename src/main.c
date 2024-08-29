@@ -106,12 +106,12 @@ static char **splitLines(char *line){
 }
 
 static char *readLine(void) {
-
     char *line = NULL;
     size_t bufsize = 0; 
 
     if (getline(&line, &bufsize, stdin) == -1){
         if (feof(stdin)) {
+            perror("Getline feof(stdin)");
             exit(1);  
         } else  {
             fprintf(stderr, "readline:  error\n");
@@ -123,29 +123,49 @@ static char *readLine(void) {
 
 }
 
-static void sushiLoop(){
-    char *line;
-    char **args;
-    bool shStatus = 1;
+static void sushiLoop(char *username, char * hostname){
+    char *line = NULL;
+    char **args = NULL;
+    
+    bool shStatus = 1; // If 0, exit shell
 
     while (shStatus){
+
+        printf("%s@%s:",username, hostname);
         printf(">");
 
         line = readLine();
         args = splitLines(line);
         shStatus = launch(args);
-
         free(line);
         free(args);
-
+           
     }
     
 }
 
 
 int main(int argc, char** argv) {
+    char *hostname;
+    char *username;
+    const int BUF_DELIM = 64;
+    int bufsize = 64;
 
-    sushiLoop();
+    username = getlogin();
+    if (username == NULL) {
+        perror("getlogin");
+        return 1;
+    }
+
+    hostname = malloc( sizeof(char) * bufsize );
+
+    while(gethostname(hostname, sizeof(hostname)) != 0){
+        
+            bufsize += BUF_DELIM;
+            hostname = realloc(hostname, sizeof (char) * bufsize);
+
+    }
+    sushiLoop(username, hostname);
 
     return 0;
 }
