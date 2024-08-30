@@ -95,12 +95,13 @@ static bool readInput(char **line) {
     *line = readline("> ");
     if (*line == NULL) {
         perror("readline");
-        exit(EXIT_FAILURE);
+        return false;
     }
 
     if (strlen(*line) == 0) { // Handle empty line
         free(*line);
-        return false;
+        *line = NULL;
+        return true;
     }
 
     add_history(*line);
@@ -115,13 +116,15 @@ static void sushiLoop(char *username, char *hostname) {
     while (shStatus) {
         printf("\033[1;31m%s\033[1;0m@\033[1;31m%s\033[1;0m: ", username, hostname);
 
-        if (readInput(&line)) {
-            args = splitLines(line);
-            shStatus = launch(args);
-            free(args);
+        if (readInput(&line)) { // Pass address of line
+            if (line != NULL) { // Check if line is not NULL
+                args = splitLines(line);
+                shStatus = launch(args);
+                free(args);
+            }
         }
 
-        free(line);
+        free(line); // Free line after use
         line = NULL; // Reset line to NULL after free
     }
 }
