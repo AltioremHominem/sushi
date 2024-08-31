@@ -9,22 +9,34 @@
 #include <readline/history.h>
 
 /// Writes on a file that contains history
-static void writeOnHisroty(char *line){
+static void writeOnHistory(char *line){
     FILE* fd = NULL;
-    fd = fopen("~/.sushi_history", "rw+");
+    
+    const char *HOME_ENV_VAR = getenv("HOME");
+    const char *PATH_ENV_VAR = getenv("PATH");
+
+    if (chdir(HOME_ENV_VAR) != 0) {
+        perror("cd 1");
+    }
+
+    fd = fopen(".sushi_history", "w+");
 
     if (fd == NULL) {
-        perror("open");
+        perror("open()");
         exit(EXIT_FAILURE);
     }
 
     fprintf(fd,"%s\n ", line);
 
+    if (chdir(PATH_ENV_VAR) != 0) {
+        perror("cd 2");
+    }
+
     fclose(fd);
 }
 
 /// Change Directory Builtin
-static void cd(char **args) {
+static void cd( char **args) {
     if (args[1] == NULL) {
         fprintf(stderr, "Expected argument to \"cd\"\n");
     } else {
@@ -35,7 +47,7 @@ static void cd(char **args) {
 }
 
 /// Creates a child procces to execute the command
-static bool execute(char **args) {
+static bool execute( char **args) {
     pid_t pid, wpid;
     int status;
 
