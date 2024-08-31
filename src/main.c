@@ -7,19 +7,22 @@
 #include <unistd.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <limits.h>
 
 /// Writes on a file that contains history
 static void writeOnHistory(char *line){
-    FILE* fd = NULL;
-    
+    FILE* fd = NULL;   
     const char *HOME_ENV_VAR = getenv("HOME");
-    const char *PATH_ENV_VAR = getenv("PATH");
+    char filePath[PATH_MAX];
 
-    if (chdir(HOME_ENV_VAR) != 0) {
-        perror("cd 1");
+    if (HOME_ENV_VAR == NULL) {
+        perror("getenv");
+        exit(EXIT_FAILURE);
     }
 
-    fd = fopen(".sushi_history", "w+");
+    snprintf(filePath, sizeof(filePath), "%s/.sushi_history", HOME_ENV_VAR);
+
+    fd = fopen(filePath, "a+");
 
     if (fd == NULL) {
         perror("open()");
@@ -27,10 +30,6 @@ static void writeOnHistory(char *line){
     }
 
     fprintf(fd,"%s\n ", line);
-
-    if (chdir(PATH_ENV_VAR) != 0) {
-        perror("cd 2");
-    }
 
     fclose(fd);
 }
