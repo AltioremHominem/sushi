@@ -8,6 +8,22 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+/// Writes on a file that contains history
+static void writeOnHisroty(char *line){
+    FILE* fd = NULL;
+    fd = fopen("~/.sushi_history", "rw+");
+
+    if (fd == NULL) {
+        perror("open");
+        exit(EXIT_FAILURE);
+    }
+
+    fprintf(fd,"%s\n ", line);
+
+    fclose(fd);
+}
+
+/// Change Directory Builtin
 static void cd(char **args) {
     if (args[1] == NULL) {
         fprintf(stderr, "Expected argument to \"cd\"\n");
@@ -18,6 +34,7 @@ static void cd(char **args) {
     }
 }
 
+/// Creates a child procces to execute the command
 static bool execute(char **args) {
     pid_t pid, wpid;
     int status;
@@ -39,12 +56,14 @@ static bool execute(char **args) {
     return true;
 }
 
+
+/// Launch a builtin or a command + args
 static bool launch(char **args) {
     if (args[0] == NULL) {
         return true; // Empty command
     }
 
-    if (strcmp(args[0], "exit") == 0) {
+    if (strcmp(args[0], "exit") == 0) { // Exit Builtin
         return false;
     }
 
@@ -56,6 +75,7 @@ static bool launch(char **args) {
     return execute(args);
 }
 
+/// Split the line into multiple lines (command + args)
 static char **splitLines(char *line) {
     const int TOK_BUFSIZE = 64;
     const char *TOK_DELIM = " \t\r\n\a";
@@ -101,19 +121,20 @@ static void sushiLoop(char *username, char *hostname) {
     while (shStatus) {
         printf("\033[1;31m%s\033[1;0m@\033[1;31m%s\033[1;0m: ", username, hostname);
 
+
+        // Read Input
         line = readline("> ");
         if (line == NULL) {
             perror("readline");
             exit(EXIT_FAILURE);
         }
-
-        if (strlen(line) == 0) { // Handle empty line
+        if (strlen(line) == 0) { 
             free(line);
             line = NULL;
             continue;
         }
 
-        add_history(line);
+        writeOnHistory(line);
 
         args = splitLines(line);
         shStatus = launch(args);
