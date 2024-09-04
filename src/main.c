@@ -9,6 +9,12 @@
 #include <readline/history.h>
 #include <limits.h>
 
+static void showHelp() {
+    printf("Help Message");
+
+
+}
+
 static void showHistory() {
     FILE* fd = NULL;
     const char *HOME_ENV_VAR = getenv("HOME");
@@ -30,7 +36,6 @@ static void showHistory() {
 
     fgets(filePath,sizeof(filePath),fd);
 
-    //Prints Each Line of .sushi_history :
     printf("%s\n",filePath);
 
     fclose(fd);
@@ -63,7 +68,7 @@ static void writeOnHistory(char *line){
 }
 
 /// Change Directory Builtin
-static void cd( char **args) {
+static void changeDirectory( char **args) {
     if (args[1] == NULL) {
         fprintf(stderr, "Expected argument to \"cd\"\n");
     } else {
@@ -74,7 +79,7 @@ static void cd( char **args) {
 }
 
 /// Creates a child process to execute the command
-static bool execute( char **args) {
+static bool executeCommand( char **args) {
     pid_t pid;
     int status;
 
@@ -98,7 +103,7 @@ static bool execute( char **args) {
 
 
 /// Launch a builtin or a command + args
-static bool launch(char **args) {
+static bool launchBuiltIns(char **args) {
     if (args[0] == NULL) {
         return true; // Empty command
     }
@@ -108,7 +113,7 @@ static bool launch(char **args) {
     }
 
     if (strcmp(args[0], "cd") == 0) {
-        cd(args);
+        changeDirectory(args);
         return true;
     }
 
@@ -117,7 +122,12 @@ static bool launch(char **args) {
         return true;
     }
 
-    return execute(args);
+    if (strcmp(args[0], "help") == 0) {
+        showHelp();
+        return true;
+    }
+
+    return executeCommand(args);
 }
 
 /// Split the line into multiple lines (command + args)
@@ -196,7 +206,7 @@ static void sushiLoop() {
         writeOnHistory(line);
 
         args = splitLines(line);
-        shStatus = launch(args);
+        shStatus = launchBuiltIns(args);
         free(args);
 
         free(line); 

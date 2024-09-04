@@ -1,10 +1,10 @@
 CFLAGS = -Wall -Wextra
-CC = gcc
+CC  =gcc
 OBJECTS = src/main.c
 LIBRARIES = -lreadline
 
 all:
-	$(CC) -o sushi $(OBJECTS) $(CFLAGS) $(LIBRARIES)
+	$(CC) $(OBJECTS) -o sushi  $(CFLAGS) $(LIBRARIES)
 
 clear:
 	rm sushi
