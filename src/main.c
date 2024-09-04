@@ -9,6 +9,34 @@
 #include <readline/history.h>
 #include <limits.h>
 
+static void showHistory() {
+    FILE* fd = NULL;
+    const char *HOME_ENV_VAR = getenv("HOME");
+    char filePath[PATH_MAX];
+
+    if (HOME_ENV_VAR == NULL) {
+        perror("getenv");
+        exit(EXIT_FAILURE);
+    }
+
+    snprintf(filePath, sizeof(filePath), "%s/.sushi_history", HOME_ENV_VAR);
+
+    fd = fopen(filePath, "r+");
+
+    if (fd == NULL) {
+        perror("open()");
+        exit(EXIT_FAILURE);
+    }
+
+    fgets(filePath,sizeof(filePath),fd);
+
+    //Prints Each Line of .sushi_history :
+    printf("%s\n",filePath);
+
+    fclose(fd);
+
+}
+
 /// Writes on a file that contains history
 static void writeOnHistory(char *line){
     FILE* fd = NULL;   
@@ -45,9 +73,9 @@ static void cd( char **args) {
     }
 }
 
-/// Creates a child procces to execute the command
+/// Creates a child process to execute the command
 static bool execute( char **args) {
-    pid_t pid, wpid;
+    pid_t pid;
     int status;
 
     pid = fork();
@@ -59,9 +87,10 @@ static bool execute( char **args) {
     } else if (pid < 0) {
         perror("fork");
     } else {
-        do {
-            wpid = waitpid(pid, &status, WUNTRACED);
-        } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+        waitpid(pid, &status, WUNTRACED);
+        while (!WIFEXITED(status) && !WIFSIGNALED(status)) {
+            waitpid(pid, &status, WUNTRACED);
+        }
     }
 
     return true;
@@ -80,6 +109,11 @@ static bool launch(char **args) {
 
     if (strcmp(args[0], "cd") == 0) {
         cd(args);
+        return true;
+    }
+
+    if (strcmp(args[0], "history") == 0) {
+        showHistory();
         return true;
     }
 
@@ -124,7 +158,21 @@ static char **splitLines(char *line) {
 
 
 
-static void sushiLoop(char *username, char *hostname) {
+static void sushiLoop() {
+    char hostname[256];
+    char *username;
+
+    username = getlogin();
+    if (username == NULL) {
+        perror("getlogin");
+        exit( EXIT_FAILURE);
+    }
+
+    if (gethostname(hostname, sizeof(hostname)) != 0) {
+        perror("gethostname");
+        exit (EXIT_FAILURE);
+    }
+
     char *line = NULL;
     char **args;
     bool shStatus = true;
@@ -157,21 +205,9 @@ static void sushiLoop(char *username, char *hostname) {
 }
 
 int main(int argc, char** argv) {
-    char hostname[256];
-    char *username;
 
-    username = getlogin();
-    if (username == NULL) {
-        perror("getlogin");
-        return EXIT_FAILURE;
-    }
 
-    if (gethostname(hostname, sizeof(hostname)) != 0) {
-        perror("gethostname");
-        return EXIT_FAILURE;
-    }
-
-    sushiLoop(username, hostname);
+    sushiLoop();
 
     return EXIT_SUCCESS;
 }
